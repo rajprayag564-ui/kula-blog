@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Book</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Merriweather', serif; /* High-quality serif font */
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Prevent scroll bars during flips */
+        }
+
+        /* Book Container */
+        .book-container {
+            perspective: 1500px; /* 3D effect depth */
+            width: 90vw;
+            max-width: 600px; /* Desktop width */
+            height: 80vh;
+            max-height: 800px; /* Desktop height */
+            position: relative;
+        }
+
+        /* Book Structure */
+        .book {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s;
+        }
+
+        /* Pages */
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Soft shadow */
+            border-radius: 10px; /* Rounded corners */
+            transform-origin: left center; /* Pivot point for flip */
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1); /* Smooth easing */
+            z-index: 1; /* Default z-index */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            backface-visibility: hidden; /* Hide back when flipped */
+        }
+
+        /* Front Cover Specifics */
+        .front-cover {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            z-index: 20; /* Ensure front cover is on top initially */
+        }
+
+        .front-cover h1 {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .front-cover .date {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .open-btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #333;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .open-btn:hover {
+            background-color: #555;
+        }
+
+        /* Content Pages */
+        .content-page {
+            background-color: #fafafa;
+        }
+
+        .image-placeholder {
+            width: 90%;
+            height: 50%; /* Top half */
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .text-caption {
+            width: 90%;
+            height: 40%; /* Bottom half */
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #444;
+            text-align: center;
+            overflow-y: auto; /* Scroll if text is too long */
+        }
+
+        /* Back Cover */
+        .back-cover {
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); /* Example gradient */
+            color: #fff;
+            z-index: 1;
+        }
+
+        .back-cover h2 {
+            font-size: 2rem;
+            text-align: center;
+        }
+
+        /* Flip Logic Classes */
+        .flipped {
+            transform: rotateY(-180deg);
+            z-index: 0 !important; /* Send to back when flipped */
+        }
+
+        /* Z-Index Handling for Stacking */
+        /* Initially, pages are stacked. Front cover is top (20).
+           Page 1 is below (19), Page 2 (18), etc. Back cover is bottom (1). */
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .book-container {
+                width: 95vw;
+                height: 85vh;
+            }
+
+            .front-cover h1 {
+                font-size: 2rem;
+            }
+
+            .text-caption {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="book-container">
+        <div class="book" id="book">
+            <!-- Pages will be injected here by JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // --- CUSTOMIZATION SECTION ---
+        // Edit this object to change content.
+        const bookConfig = {
+            title: "My Memory Book",
+            date: "October 2023",
+            pages: [
+                {
+                    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80", // Landscape placeholder
+                    text: "Page 1: A beautiful start to our journey. The mountains were breathtaking."
+                },
+                {
+                    image: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?auto=format&fit=crop&w=600&q=80", // Nature placeholder
+                    text: "Page 2: Walking through the quiet forest, listening to the birds."
+                },
+                {
+                    image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80", // Misty forest
+                    text: "Page 3: The mist rolling in over the hills created a mysterious atmosphere."
+                },
+                {
+                    image: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80", // Sunlight
+                    text: "Page 4: Sunlight filtering through the canopy, warming our faces."
+                },
+                {
+                    image: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80", // Autumn
+                    text: "Page 5: As the seasons changed, the colors became vibrant and warm."
+                }
+            ],
+            closingMessage: "Thank you for sharing these memories with me."
+        };
+        // -----------------------------
+
+        const book = document.getElementById('book');
+        let currentPageIndex = 0; // 0 = Front Cover, 1-5 = Pages, 6 = Back Cover
+        const totalPages = bookConfig.pages.length + 2; // +2 for covers
+        let startX = 0;
+
+        function initBook() {
+            // 1. Create Front Cover
+            const frontCover = document.createElement('div');
+            frontCover.className = 'page front-cover';
+            frontCover.style.zIndex = totalPages; // Topmost
+            frontCover.innerHTML = `
+                <h1>${bookConfig.title}</h1>
+                <div class="date">${bookConfig.date}</div>
+                <button class="open-btn" onclick="nextPage()">Open</button>
+            `;
+            book.appendChild(frontCover);
+
+            // 2. Create Content Pages
+            bookConfig.pages.forEach((pageData, index) => {
+                const page = document.createElement('div');
+                page.className = 'page content-page';
+                // Calculate z-index: high for early pages, low for later pages
+                page.style.zIndex = totalPages - 1 - index;
+                page.innerHTML = `
+                    <div class="image-placeholder">
+                        <img src="${pageData.image}" alt="Memory Image ${index + 1}">
+                    </div>
+                    <div class="text-caption">${pageData.text}</div>
+                `;
+                // Click to turn page
+                page.addEventListener('click', () => nextPage());
+                book.appendChild(page);
+            });
+
+            // 3. Create Back Cover
+            const backCover = document.createElement('div');
+            backCover.className = 'page back-cover';
+            backCover.style.zIndex = 1; // Bottommost
+            backCover.innerHTML = `
+                <h2>${bookConfig.closingMessage}</h2>
+                <button class="open-btn" style="margin-top:20px;" onclick="resetBook()">Close Book</button>
+            `;
+            // Allow clicking back cover to close (optional, but good UX)
+            backCover.addEventListener('click', () => resetBook());
+            book.appendChild(backCover);
+
+            // Add Touch Event Listeners for Mobile Swipe
+            book.addEventListener('touchstart', handleTouchStart, false);
+            book.addEventListener('touchend', handleTouchEnd, false);
+        }
+
+        function nextPage() {
+            if (currentPageIndex < totalPages - 1) {
+                const pages = document.querySelectorAll('.page');
+                pages[currentPageIndex].classList.add('flipped');
+                currentPageIndex++;
+            }
+        }
+
+        function prevPage() {
+            if (currentPageIndex > 0) {
+                currentPageIndex--;
+                const pages = document.querySelectorAll('.page');
+                pages[currentPageIndex].classList.remove('flipped');
+            }
+        }
+
+        function resetBook() {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => page.classList.remove('flipped'));
+            currentPageIndex = 0;
+        }
+
+        // Touch Handling
+        function handleTouchStart(e) {
+            startX = e.changedTouches[0].screenX;
+        }
+
+        function handleTouchEnd(e) {
+            const endX = e.changedTouches[0].screenX;
+            const diffX = startX - endX;
+
+            // Threshold for swipe
+            if (Math.abs(diffX) > 50) {
+                if (diffX > 0) {
+                    // Swipe Left -> Next Page
+                    nextPage();
+                } else {
+                    // Swipe Right -> Previous Page
+                    prevPage();
+                }
+            }
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                nextPage();
+            } else if (e.key === 'ArrowLeft') {
+                prevPage();
+            }
+        });
+
+        // Initialize on Load
+        window.onload = initBook;
+
+    </script>
+</body>
+</html>
